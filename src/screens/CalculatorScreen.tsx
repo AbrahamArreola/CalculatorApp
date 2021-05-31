@@ -1,14 +1,19 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Text, View } from "react-native";
 import { CalculatorButton } from "../components/CalculatorButton";
 import { styles } from "../theme/appTheme";
 
+type Operation = "add" | "subtract" | "divide" | "multiply";
+
 export const CalculatorScreen = () => {
     const [currentNumber, setCurrentNumber] = useState("0");
-    const [previousNumber] = useState("0");
+    const [previousNumber, setPreviousNumber] = useState("0");
+
+    let currentOperation = useRef<Operation | "">("");
 
     const clear = () => {
         setCurrentNumber("0");
+        setPreviousNumber("0");
     };
 
     const typeNumber = (character: string) => {
@@ -66,9 +71,53 @@ export const CalculatorScreen = () => {
         }
     };
 
+    const swapNumbers = () => {
+        if (currentNumber.endsWith(".")) {
+            setPreviousNumber(currentNumber.slice(0, -1));
+        } else {
+            setPreviousNumber(currentNumber);
+        }
+
+        setCurrentNumber("0");
+    };
+
+    const operationButton = (operation: Operation) => {
+        currentOperation.current = operation;
+        swapNumbers();
+    };
+
+    const calculate = () => {
+        if (currentOperation.current === "") return;
+
+        const num1 = Number(currentNumber);
+        const num2 = Number(previousNumber);
+
+        switch (currentOperation.current) {
+            case "add":
+                setCurrentNumber(`${num1 + num2}`);
+                break;
+
+            case "subtract":
+                setCurrentNumber(`${num2 - num1}`);
+                break;
+
+            case "multiply":
+                setCurrentNumber(`${num1 * num2}`);
+                break;
+
+            case "divide":
+                setCurrentNumber(`${num2 / num1}`);
+                break;
+        }
+
+        setPreviousNumber("0");
+        currentOperation.current = "";
+    };
+
     return (
         <View style={styles.calculatorContainer}>
-            <Text style={styles.smallResult}>{previousNumber}</Text>
+            {previousNumber !== "0" && <Text style={styles.smallResult}>{previousNumber}</Text>}
+
             <Text style={styles.result} numberOfLines={1} adjustsFontSizeToFit>
                 {currentNumber}
             </Text>
@@ -77,34 +126,34 @@ export const CalculatorScreen = () => {
                 <CalculatorButton label="C" color="lightGray" action={clear} />
                 <CalculatorButton label="+/-" color="lightGray" action={handlePositiveNegative} />
                 <CalculatorButton label="del" color="lightGray" action={deleteButton} />
-                <CalculatorButton label="÷" color="orange" action={typeNumber} />
+                <CalculatorButton label="÷" color="orange" action={() => operationButton("divide")} />
             </View>
 
             <View style={styles.row}>
                 <CalculatorButton label="7" color="darkGray" action={typeNumber} />
                 <CalculatorButton label="8" color="darkGray" action={typeNumber} />
                 <CalculatorButton label="9" color="darkGray" action={typeNumber} />
-                <CalculatorButton label="x" color="orange" action={typeNumber} />
+                <CalculatorButton label="x" color="orange" action={() => operationButton("multiply")} />
             </View>
 
             <View style={styles.row}>
                 <CalculatorButton label="4" color="darkGray" action={typeNumber} />
                 <CalculatorButton label="5" color="darkGray" action={typeNumber} />
                 <CalculatorButton label="6" color="darkGray" action={typeNumber} />
-                <CalculatorButton label="-" color="orange" action={typeNumber} />
+                <CalculatorButton label="-" color="orange" action={() => operationButton("subtract")} />
             </View>
 
             <View style={styles.row}>
                 <CalculatorButton label="1" color="darkGray" action={typeNumber} />
                 <CalculatorButton label="2" color="darkGray" action={typeNumber} />
                 <CalculatorButton label="3" color="darkGray" action={typeNumber} />
-                <CalculatorButton label="+" color="orange" action={typeNumber} />
+                <CalculatorButton label="+" color="orange" action={() => operationButton("add")} />
             </View>
 
             <View style={styles.row}>
                 <CalculatorButton label="0" color="darkGray" wide action={typeNumber} />
                 <CalculatorButton label="." color="darkGray" action={typeNumber} />
-                <CalculatorButton label="=" color="orange" action={typeNumber} />
+                <CalculatorButton label="=" color="orange" action={calculate} />
             </View>
         </View>
     );
